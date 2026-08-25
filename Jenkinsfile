@@ -1,7 +1,7 @@
 pipeline {
     agent any
 
-    // Configuration variables for your pipeline
+    // Configuration variables for your CI pipeline
     environment {
         // Your exact AWS S3 Bucket Name
         S3_BUCKET    = 'code-version'
@@ -14,7 +14,7 @@ pipeline {
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('CI: Checkout Code') {
             steps {
                 echo 'Pulling the latest code from your GitHub repository...'
                 // Downloads files from your Git repo
@@ -22,7 +22,7 @@ pipeline {
             }
         }
 
-        stage('Package Application') {
+        stage('CI: Package Application') {
             steps {
                 echo 'Compressing files into a deployment package...'
                 // Packages your exact files directly from the root directory
@@ -30,7 +30,7 @@ pipeline {
             }
         }
 
-        stage('Upload to AWS S3') {
+        stage('CI: Upload to AWS S3') {
             steps {
                 // Securely pulls your secret AWS keys from Jenkins storage
                 withCredentials([usernamePassword(credentialsId: "${AWS_CREDS_ID}", 
@@ -43,6 +43,15 @@ pipeline {
                 }
             }
         }
+
+        stage('CI: Trigger CD Pipeline') {
+            steps {
+                echo 'CI completed successfully! Triggering the CD deployment job automatically...'
+                
+                // This triggers your separate CD job (Docker-CD-VM) automatically
+                build job: 'Docker-CD-VM', wait: false
+            }
+        }
     }
 
     post {
@@ -52,10 +61,10 @@ pipeline {
             sh "rm -f ${PACKAGE_NAME}"
         }
         success {
-            echo 'Pipeline Success! Your package is now live in the code-version S3 bucket.'
+            echo 'CI Pipeline Success! Your package is now live in S3 and CD is triggered.'
         }
         failure {
-            echo 'Pipeline Failed. Please check the logs above to troubleshoot errors.'
+            echo 'CI Pipeline Failed. CD was not triggered. Please check the logs above to troubleshoot errors.'
         }
     }
 }
