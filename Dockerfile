@@ -2,7 +2,7 @@
 FROM nginx:alpine
 
 # Step 2: Copy your local website files into Nginx's default folder
-COPY /usr/share/nginx/html
+COPY . /usr/share/nginx/html
 
 # Step 3: Inform Docker that the container will listen on port 80
 EXPOSE 80
